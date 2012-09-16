@@ -1,0 +1,86 @@
+#!/bin/sh
+
+# System wide configuration file
+syswmfile="/etc/sysconfig/desktop"
+
+# Default values - may be redefined in $syswmfile
+userwmfile=".desktop"
+xsessdir="/usr/share/xsessions"
+DEFAULTWM=""
+
+# Unset these
+unset USERWM WM_CHOICE
+
+loadsess()
+{
+	typeset runwm=$1
+
+	[ -z "$runwm" ] && return
+
+	if [ -x "$HOME/bin/$runwm.sh" ]; then
+		exec "$HOME/bin/$runwm.sh"
+	elif test `/usr/bin/which $runwm 2>/dev/null`; then
+		eval "exec $runwm"
+	fi
+}
+
+findxsession()
+{
+	typeset -l __XSESSION=$1
+	typeset f progname=""
+
+	if [ ! -d "$xsessdir" ]; then
+		echo "$xsessdir not found - check Your settings." >&2
+		return
+	fi
+	for f in $xsessdir/*.desktop; do
+		typeset -l sessfile sessname altnames
+		sessfile=$(basename $f .desktop)
+		sessname=$(grep "^Name=" $f)
+		sessname=${sessname##name=}
+		if [ "$sessname" = "$__XSESSION" -o "$sessfile" = "$__XSESSION" ]; then
+			progname=$(grep "^Exec=" $f)
+			progname=${progname##Exec=}
+			break
+		fi
+		altnames=$(grep "^X-AltNames=" $f)
+		altnames=${altnames##x-altnames=}
+		oldIFS=$IFS ; IFS=";"; set -- $altnames ; IFS=$oldIFS
+		altnames="$*" 
+		for n in $altnames; do
+			if [ "$n" = "$__XSESSION" ]; then
+				progname=$(grep "^Exec=" $f)
+				progname=${progname##Exec=}
+	    			break 2
+			fi
+		done
+	done
+	echo $progname
+}
+
+[ -f $syswmfile ] && . $syswmfile
+
+userwmfilefp=$HOME/$userwmfile
+
+[ -f $userwmfilefp ] && USERWM=`grep -v "^#" $userwmfilefp | head -n 1`
+
+# Evaluate cmdline first
+[ -n "$*" ] && USERWM="$*"
+
+if [ -n "$USERWM" ]; then
+        # Try to run literal user choice first
+	loadsess $USERWM
+	# if it fails - take another actions
+	WM_CHOICE=$(findxsession $USERWM)
+	if [ -n "$WM_CHOICE" ]; then
+		loadsess $WM_CHOICE
+	fi
+	echo "Sorry - nothing known about $USERWM" >&2
+	echo "Resuming with system defaults..." >&2
+fi
+
+WM_CHOICE=$(findxsession $DEFAULTWM)
+
+loadsess $WM_CHOICE
+exec urxvt
+

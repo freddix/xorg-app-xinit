@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Call standard xinit actions
+. /etc/X11/xinit/xinitdefs
+
+if [ -f $HOME/.Xclients ]; then
+	exec $SSH_AGENT $HOME/.Xclients $*
+else
+	exec $SSH_AGENT /etc/X11/xinit/Xclients $*
+fi
+
