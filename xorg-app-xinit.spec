@@ -1,11 +1,11 @@
 Summary:	xinit scripts
 Name:		xorg-app-xinit
-Version:	1.3.2
-Release:	2
+Version:	1.3.4
+Release:	1
 License:	MIT
 Group:		X11/Applications
 Source0:	http://xorg.freedesktop.org/releases/individual/app/xinit-%{version}.tar.bz2
-# Source0-md5:	9c0943cbd83e489ad1b05221b97efd44
+# Source0-md5:	4e928452dfaf73851413a2d8b8c76388
 Source10:	%{name}-Xclients
 Source11:	%{name}-Xresources
 Source12:	%{name}-desktop
